@@ -6,9 +6,19 @@ program prueba1
  print *, 'Introduzca el archivo .msh que quiere leer'
  read *, ar
 
- meshs = load_mesh(ar)
+ call load_mesh(ar, meshs)
  print *, 'Ahora vamos a esportarlo'
+ print *, 'Son', meshs%nnodes, 'nodes'
+
+ do i=1,meshs%nnodes
+   print *, meshs%nodes(i)%p
+ enddo
  
+ print *, 'Numero de edges', meshs%nedges
+ 
+
+ call get_edges(meshs)
+
  call export_mesh('nuevo.msh',meshs)
  print *, 'Fino, ojala aiga servido, vea el archivo nuevo.msh'
 end program prueba1

@@ -15,12 +15,12 @@ USE constants
        mesh_bnd_prdy2 = 8,&
        mesh_bnd_rz1 = 9,&
        mesh_bnd_rz2 = 10
-
+  INTEGER :: i,j,w
   TYPE node
      REAL (KIND=dp), DIMENSION(3) :: p
-     !INTEGER, DIMENSION(:), POINTER :: face_indices, node_indices
+     INTEGER, DIMENSION(:), POINTER :: face_indices, node_indices
      INTEGER :: parent_index
-     !INTEGER :: bnd, nbnd
+     INTEGER :: bnd, nbnd
   END TYPE node
 
   TYPE face
@@ -37,8 +37,18 @@ USE constants
      INTEGER, DIMENSION(2) :: node_indices
      INTEGER :: id
   END TYPE line
-
-  TYPE edge
+! Edge de ejemplo
+!  TYPE edge
+!     INTEGER, DIMENSION(2) :: node_indices, bnode_indices, face_indices
+!     REAL (KIND=dp) :: length
+!!     REAL (KIND=dp), DIMENSION(2) :: rwgDiv
+!     INTEGER :: bnd
+!     INTEGER :: parent_index
+!     INTEGER :: couple_index
+!     INTEGER, DIMENSION(:,:), ALLOCATABLE :: child_indices ! (:,1)=submesh, (:,2)=local edge
+!  END TYPE edge
+! Edge mio
+TYPE edge
      INTEGER, DIMENSION(2) :: node_indices, bnode_indices, face_indices
      REAL (KIND=dp) :: length
 !     REAL (KIND=dp), DIMENSION(2) :: rwgDiv
@@ -47,7 +57,11 @@ USE constants
      INTEGER :: couple_index
      INTEGER, DIMENSION(:,:), ALLOCATABLE :: child_indices ! (:,1)=submesh, (:,2)=local edge
   END TYPE edge
-
+! TYPE edge
+!     INTEGER, DIMENSION(2) :: node_indices, face_indices
+!     INTEGER :: edge_index ! -1 if not a boundary
+ !    REAL (KIND=dp) :: longitud
+ ! END TYPE edge
   ! Interior face.
 
   TYPE solid_face
@@ -119,9 +133,10 @@ FUNCTION get_mesh_element_lines(filename) RESULT(lines)
     CLOSE(fid)
   END FUNCTION get_mesh_element_lines
 
-FUNCTION load_mesh(filename) RESULT(mesh)
+SUBROUTINE load_mesh(filename,mesh)
+    TYPE(mesh_container), INTENT(INOUT) :: mesh
     CHARACTER (LEN=*), INTENT(IN) :: filename
-    TYPE(mesh_container) :: mesh
+    !TYPE(mesh_container) :: mesh
     CHARACTER (LEN=3) :: ext
 
     ext = getext(filename)
@@ -141,7 +156,7 @@ FUNCTION load_mesh(filename) RESULT(mesh)
     WRITE(*,'(A,I0,:,A)') ' - Read ', mesh%nlines, ' lines'
     WRITE(*,'(A,I0,:,A)') ' - Read ', mesh%nsolids, ' solids'
     
-  END FUNCTION load_mesh
+  END SUBROUTINE load_mesh
  FUNCTION load_mesh_gmsh(filename) RESULT(mesh)
     CHARACTER (LEN=*), INTENT(IN) :: filename
     CHARACTER (LEN=256) :: lineid, line
@@ -361,5 +376,80 @@ FUNCTION load_mesh(filename) RESULT(mesh)
        mesh%nodes(n)%p =  mesh%nodes(n)%p*scale
     END DO
   END SUBROUTINE scale_mesh
+
+! funciones nuevas
+!! ve si un valor esta en un arreglo
+FUNCTION saberSista(array,valor) RESULT(si)
+  INTEGER, DIMENSION(3),INTENT(in) :: array
+  integer,INTENT(in) :: valor
+  logical :: si
+  do i=0,SIZE(array)
+    if (array(i) == valor) then
+       si = .True.
+       STOP
+    end if
+  end do
+  si = .false.
+END FUNCTION
+    
+!! Verifica que un elemento este en un arreglo
+!! ar el arreglo
+!! val el valor
+FUNCTION find(ar,val) result(si)
+  INTEGER, INTENT(in), DIMENSION(2) :: ar
+  integer, INTENT(in) :: val
+  logical :: si
+  do i=0,SIZE(ar)
+    if (ar(i) == val) then
+      si = .True.
+      STOP
+    end if
+  end do
+
+  si = .False.
+end function
+!! Saber si un elemento de un arreglo ya esta en otro
+FUNCTION yaSeUso(nodos,nodo) result(si)
+  type(mesh_container), INTENT(in) :: nodos
+  integer, INTENT(in) :: nodo
+  logical :: si
+  do i=0,SIZE(nodos%edges)
+    if (ALL(nodos%edges%node_indices(i)==nodo)) then
+      si= .True.
+      STOP
+    end if
+  si= .False.
+  END DO
+END FUNCTION
+!> Obtienes los lados comunes de los triangulos
+!! @param mesh el mesh_container
+SUBROUTINE GET_EDGES(mesh)
+    type(mesh_container),INTENT(INOUT) :: mesh
+    !integer, intent(in) :: cantnodos
+    !type(edge), dimension(:,:), allocatable :: result
+    integer :: no
+    do i=1,mesh%nnodes
+        mesh%EDGES(i)%bnd = i
+        do j=1,mesh%nfaces
+           if(saberSista(mesh%faces(j)%node_indices, mesh%edges(i)%bnd)) then
+             no=0
+             do w=0,2
+               if (mesh%EDGES(i)%bnd /= mesh%faces(j)%node_indices(w)) then
+                 if(yaSeUso(mesh,mesh%faces(j)%node_indices(w))) then
+                   if(find(mesh%EDGES(i)%node_indices, mesh%faces(j)%node_indices(w))) then
+                     ! Ojala sirva esto
+                     mesh%EDGES(i)%node_indices(no) =mesh%faces(j)%node_indices(w)
+                     no = no+1
+                   end if
+                 end if
+               end if
+             END DO
+           end if
+        END DO
+    
+    END DO
+
+END SUBROUTINE
+
 
 END MODULE mesh
