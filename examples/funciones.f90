@@ -16,7 +16,7 @@ END FUNCTION
     
 
 FUNCTION find(ar,val) result(si)
-    INTEGER, INTENT(in), DIMENSION(2) :: ar
+  INTEGER, INTENT(in), DIMENSION(2) :: ar
 	real, INTENT(in) :: val
 	logical :: si
 	do i=0,SIZE(ar)
@@ -42,22 +42,22 @@ FUNCTION yaSeUso(nodos,nodo) result(si)
 	END DO
 END FUNCTION
 
-FUNCTION GET_EDGES(mesh,cantnodos) RESULT(result)
-    type(mesh_container),INTENT(IN) :: mesh
+SUBROUTINE GET_EDGES(mesh,cantnodos)
+    type(mesh_container),INTENT(INOUT) :: mesh
     integer, intent(in) :: cantnodos
-    type(edge), dimension(:,:), allocatable :: result
+    !type(edge), dimension(:,:), allocatable :: result
     integer :: no
-    do i=0,nodes 
-        result(i)%bnd = i+1
+    do i=0,mesh%nnodes
+        mesh%EDGES(i)%bnd = i+1
         do j=1,SIZE(mesh)
-           if(saberSista(mesh%faces(j)%node_indices,result(i)%bnd)
+           if(saberSista(mesh%faces(j)%node_indices,mesh%EDGES(i)%bnd))
              no=0
              do w=0,2
-               if (result(i)%bnd /= mesh%faces(j)%node_indices(w))
-                 if(yaSeUso(result(i),mesh%faces(j)%node_indices(w)))
-                   if(find(result(i)%node_indices, mesh%faces(j)%node_indices(w)))
+               if (mesh%EDGES(i)%bnd /= mesh%faces(j)%node_indices(w))
+                 if(yaSeUso(mesh%EDGES(i),mesh%faces(j)%node_indices(w)))
+                   if(find(mesh%EDGES(i)%node_indices, mesh%faces(j)%node_indices(w)))
                      ! Ojala sirva esto
-                     result(i)%node_indices(no) =mesh%faces(j)%node_indices(w)
+                     mesh%EDGES(i)%node_indices(no) =mesh%faces(j)%node_indices(w)
                      no = no+1
                    end if
                  end if
@@ -68,5 +68,5 @@ FUNCTION GET_EDGES(mesh,cantnodos) RESULT(result)
     
     END DO
 
-END FUNCTION
+END SUBROUTINE
 END module

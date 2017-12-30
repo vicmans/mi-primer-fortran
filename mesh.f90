@@ -383,13 +383,14 @@ FUNCTION saberSista(array,valor) RESULT(si)
   INTEGER, DIMENSION(3),INTENT(in) :: array
   integer,INTENT(in) :: valor
   logical :: si
-  do i=0,SIZE(array)
+  do i=1,3
     if (array(i) == valor) then
        si = .True.
-       STOP
+       exit
+    else
+       si = .false.
     end if
   end do
-  si = .false.
 END FUNCTION
     
 !! Verifica que un elemento este en un arreglo
@@ -399,26 +400,30 @@ FUNCTION find(ar,val) result(si)
   INTEGER, INTENT(in), DIMENSION(2) :: ar
   integer, INTENT(in) :: val
   logical :: si
-  do i=0,SIZE(ar)
+  do i=1,SIZE(ar)
     if (ar(i) == val) then
       si = .True.
-      STOP
+      EXIT
+    else
+      si= .False.
     end if
   end do
-
-  si = .False.
 end function
 !! Saber si un elemento de un arreglo ya esta en otro
-FUNCTION yaSeUso(nodos,nodo) result(si)
-  type(mesh_container), INTENT(in) :: nodos
+FUNCTION yaSeUso(edges,nodo) result(si)
+  type(edge), dimension(:), allocatable, INTENT(in) :: edges
   integer, INTENT(in) :: nodo
   logical :: si
-  do i=0,SIZE(nodos%edges)
-    if (ALL(nodos%edges%node_indices(i)==nodo)) then
+  print *, 'tamaño de node_indices', SIZE(edges)
+  do i=1,SIZE(edges)
+
+    if (edges(i)%bnd==nodo) then
       si= .True.
-      STOP
+      EXIT
+    else
+      si= .False.
     end if
-  si= .False.
+  
   END DO
 END FUNCTION
 !> Obtienes los lados comunes de los triangulos
@@ -426,20 +431,34 @@ END FUNCTION
 SUBROUTINE GET_EDGES(mesh)
     type(mesh_container),INTENT(INOUT) :: mesh
     !integer, intent(in) :: cantnodos
-    !type(edge), dimension(:,:), allocatable :: result
-    integer :: no
+    type(edge), dimension(:), allocatable :: tmpedges
+
+    integer :: i = 1
+    integer :: no, cedges, nedges
+    cedges = 0
+    nedges = SIZE(mesh%faces)*3
+    ALLOCATE(tmpedges(1:nedges))
     do i=1,mesh%nnodes
-        mesh%EDGES(i)%bnd = i
+        print *, 'Primer DO',mesh%nnodes,'nodos',i
+        tmpedges(i)%bnd = i
+        tmpedges(i)%bnode_indices(1) = 0
+        tmpedges(i)%bnode_indices(2) = 0
         do j=1,mesh%nfaces
-           if(saberSista(mesh%faces(j)%node_indices, mesh%edges(i)%bnd)) then
-             no=0
-             do w=0,2
-               if (mesh%EDGES(i)%bnd /= mesh%faces(j)%node_indices(w)) then
-                 if(yaSeUso(mesh,mesh%faces(j)%node_indices(w))) then
-                   if(find(mesh%EDGES(i)%node_indices, mesh%faces(j)%node_indices(w))) then
+          !print *, '2do DO',mesh%faces(j)%node_indices,'caras con ',i
+           if(saberSista(mesh%faces(j)%node_indices, i)) then
+             no=1
+             do w=1,3
+               if (i /= mesh%faces(j)%node_indices(w)) then
+                print *, 'Aqui se recorren los nodos'
+                print *, 'Comprando i',i,'con',mesh%faces(j)%node_indices(w)
+                 if(.NOT.yaSeUso(tmpedges,mesh%faces(j)%node_indices(w))) then
+                   if(.NOT.find(tmpedges(i)%bnode_indices, mesh%faces(j)%node_indices(w))) then
                      ! Ojala sirva esto
-                     mesh%EDGES(i)%node_indices(no) =mesh%faces(j)%node_indices(w)
+                     print *, 'Aqui lo guardo alfin'
+                     tmpedges(i)%bnode_indices(no) =mesh%faces(j)%node_indices(w)
                      no = no+1
+                     cedges = cedges+1
+                     print  *, 'Contador de edges',cedges
                    end if
                  end if
                end if
@@ -448,6 +467,17 @@ SUBROUTINE GET_EDGES(mesh)
         END DO
     
     END DO
+    mesh%nedges = cedges
+    ! Trim edge arrays.
+    ALLOCATE(mesh%edges(1:cedges))
+    DO i=1,cedges
+       mesh%edges(i)%node_indices(:) = tmpedges(i)%node_indices(:)
+       mesh%edges(i)%bnode_indices(:) = tmpedges(i)%bnode_indices(:)
+       mesh%edges(i)%face_indices(:) = tmpedges(i)%face_indices(:)
+    END DO
+
+    ! Deallocate temporary arrays.
+    DEALLOCATE(tmpedges)
 
 END SUBROUTINE
 

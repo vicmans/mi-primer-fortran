@@ -26,9 +26,9 @@ MODULE mesh
 
   TYPE node
      REAL (KIND=dp), DIMENSION(3) :: p
-     !INTEGER, DIMENSION(:), POINTER :: face_indices, node_indices
+     INTEGER, DIMENSION(:), POINTER :: face_indices, node_indices
      INTEGER :: parent_index
-     !INTEGER :: bnd, nbnd
+     INTEGER :: bnd, nbnd
   END TYPE node
 
   TYPE face
@@ -576,7 +576,7 @@ CONTAINS
   END SUBROUTINE get_bnd_edges
 
   FUNCTION get_mesh_element_lines(filename) RESULT(lines)
-    CHARACTER (LEN=256), INTENT(IN) :: filename
+    CHARACTER (LEN=40), INTENT(IN) :: filename
     INTEGER, DIMENSION(:,:), POINTER :: lines
     INTEGER :: nelements, element_number, iovar, fid = 10, n
     CHARACTER (LEN=256) :: lineid
