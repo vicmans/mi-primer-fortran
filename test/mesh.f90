@@ -5,7 +5,7 @@
 ! Supports the msh-format exported by Gmsh and the neutral mesh format of Netgen.
 ! Contains also functions for splitting a mesh into submeshes and various mesh manipulation routines.
 MODULE mesh
-  USE aux
+  USE aus
   USE linalg
 
   IMPLICIT NONE
@@ -1135,9 +1135,9 @@ CONTAINS
 
     WRITE(*,'(A,I0,:,A)') ' - Created ', cedge, ' unique edges'
 
-    !IF(mesh%nsolids>0) THEN
-    !   CALL build_solid_faces(mesh)
-    !END IF
+    IF(mesh%nsolids>0) THEN
+       CALL build_solid_faces(mesh)
+    END IF
 
     CALL compute_basis_data(mesh)
 

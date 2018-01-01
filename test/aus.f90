@@ -3,7 +3,7 @@
 ! DESCRIPTION:
 ! Auxiliary routines for various purposes, such as string manipulation, file access and simple
 ! mathematical tools. This module is a good candidate for refactorization in the future.
-MODULE aux
+MODULE aus
   USE constants
 
   IMPLICIT NONE
@@ -249,4 +249,4 @@ CONTAINS
          -COS(psi)*COS(phi) - SIN(psi)*COS(theta)*SIN(phi),&
          SIN(psi)*SIN(theta)/)
   END FUNCTION get_pol
-END MODULE aux
+END MODULE aus
