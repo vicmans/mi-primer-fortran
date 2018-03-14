@@ -30,5 +30,9 @@ program prueba2
 
   enddo
 
+  do i=1,meshs%nedges
+      print *, meshs%edges(i)%face_indices(:)
+    end do
+
 
 end program prueba2
